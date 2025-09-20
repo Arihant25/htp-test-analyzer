@@ -1,28 +1,21 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Upload, Brain, Clock, Users, Shield, ChartBar, Heart, Target, Star } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="container mx-auto px-4 py-6">
-        <nav className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Brain className="h-8 w-8 text-orange-600" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">HTP Analyzer</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link href="https://github.com/Arihant25/htp-test-analyzer">
-              <Button variant="outline">GitHub</Button>
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <Navbar
+        rightContent={
+          <Link href="https://github.com/Arihant25/htp-test-analyzer">
+            <Button variant="outline">GitHub</Button>
+          </Link>
+        }
+      />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 text-center">

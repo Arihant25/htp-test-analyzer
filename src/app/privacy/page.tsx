@@ -1,26 +1,55 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Brain, Shield, Server, Trash2, Lock, Eye } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
+import Navbar from "@/components/Navbar";
+
+export const metadata: Metadata = {
+    title: "Privacy Policy - HTP Analyzer Data Protection",
+    description: "Learn about our privacy-first approach. We don't store your data permanently - all uploads are automatically deleted after analysis. Complete transparency and security for psychological assessments.",
+    keywords: [
+        "privacy policy",
+        "data protection",
+        "psychological assessment privacy",
+        "HTP test privacy",
+        "no data storage",
+        "privacy-focused AI",
+        "secure psychological analysis",
+        "data deletion policy"
+    ],
+    openGraph: {
+        title: "Privacy Policy - HTP Analyzer Data Protection",
+        description: "Learn about our privacy-first approach. We don't store your data permanently - all uploads are automatically deleted after analysis.",
+        url: '/privacy',
+        images: [
+            {
+                url: '/privacy-og.jpg',
+                width: 1200,
+                height: 630,
+                alt: 'HTP Analyzer Privacy Policy - Your Data Protection Matters',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: "Privacy Policy - HTP Analyzer Data Protection",
+        description: "Learn about our privacy-first approach. We don't store your data permanently - all uploads are automatically deleted after analysis.",
+        images: ['/privacy-og.jpg'],
+    },
+};
 
 export default function Privacy() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
-            <header className="container mx-auto px-4 py-6">
-                <nav className="flex items-center justify-between">
-                    <Link href="/" className="flex items-center space-x-2">
-                        <Brain className="h-8 w-8 text-orange-600" />
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">HTP Analyzer</span>
+            <Navbar
+                rightContent={
+                    <Link href="/">
+                        <Button variant="outline">Back to Home</Button>
                     </Link>
-                    <div className="flex items-center space-x-4">
-                        <Link href="/">
-                            <Button variant="outline">Back to Home</Button>
-                        </Link>
-                    </div>
-                </nav>
-            </header>
+                }
+            />
 
             {/* Hero Section */}
             <section className="container mx-auto px-4 py-16 text-center">

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,27 +19,57 @@ import {
     Users,
     Clock
 } from "lucide-react";
+import type { Metadata } from "next";
+import Navbar from "@/components/Navbar";
+
+export const metadata: Metadata = {
+    title: "Sample HTP Analysis Report - See How Our AI Works",
+    description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports in under 15 seconds.",
+    keywords: [
+        "HTP analysis sample",
+        "house drawing analysis example",
+        "psychological assessment demo",
+        "AI drawing analysis",
+        "children's art interpretation",
+        "sample psychological report",
+        "HTP test example",
+        "drawing assessment demo"
+    ],
+    openGraph: {
+        title: "Sample HTP Analysis Report - See How Our AI Works",
+        description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports.",
+        url: '/sample-analysis',
+        images: [
+            {
+                url: '/sample-analysis-og.jpg',
+                width: 1200,
+                height: 630,
+                alt: 'Sample HTP Analysis Report - AI-Powered Psychological Assessment',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: "Sample HTP Analysis Report - See How Our AI Works",
+        description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports.",
+        images: ['/sample-analysis-og.jpg'],
+    },
+};
 
 export default function SampleAnalysis() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
-            <header className="container mx-auto px-4 py-6">
-                <nav className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <Brain className="h-8 w-8 text-orange-600" />
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">HTP Analyzer</span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                        <Link href="/">
-                            <Button variant="outline">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Home
-                            </Button>
-                        </Link>
-                    </div>
-                </nav>
-            </header>
+            <Navbar
+                rightContent={
+                    <Link href="/">
+                        <Button variant="outline">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Home
+                        </Button>
+                    </Link>
+                }
+            />
 
             {/* Page Title */}
             <section className="container mx-auto px-4 py-8">
