@@ -1,0 +1,38 @@
+{
+    "buildCommand": "pnpm build",
+    "outputDirectory": ".next",
+    "framework": "nextjs",
+    "installCommand": "pnpm install",
+    "env": {
+        "NEXT_PUBLIC_API_URL": "https://htp-analyzer-backend.onrender.com"
+    },
+    "build": {
+        "env": {
+            "NEXT_PUBLIC_API_URL": "https://htp-analyzer-backend.onrender.com"
+        }
+    },
+    "functions": {
+        "src/app/**": {
+            "maxDuration": 30
+        }
+    },
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
+        }
+    ]
+}
