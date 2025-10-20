@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
     Brain,
     ArrowLeft,
@@ -10,56 +11,76 @@ import {
     Share,
     CheckCircle,
     AlertTriangle,
-    Info,
     Home,
-    Palette,
-    Square,
     Eye,
     Heart,
-    Users,
     Clock,
     Shield,
     Target,
-    TrendingUp
+    Loader2
 } from "lucide-react";
-import type { Metadata } from "next";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
+import { generateReportWithGemini } from "@/lib/gemini";
+import { generatePDFReport } from "@/lib/pdfGenerator";
 
-export const metadata: Metadata = {
-    title: "Sample HTP Analysis Report - See How Our AI Works",
-    description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports in under 5 seconds.",
-    keywords: [
-        "HTP analysis sample",
-        "house drawing analysis example",
-        "psychological assessment demo",
-        "AI drawing analysis",
-        "children's art interpretation",
-        "sample psychological report",
-        "HTP test example",
-        "drawing assessment demo"
-    ],
-    openGraph: {
-        title: "Sample HTP Analysis Report - See How Our AI Works",
-        description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports.",
-        url: '/sample-analysis',
-        images: [
-            {
-                url: '/sample-analysis-og.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Sample HTP Analysis Report - AI-Powered Psychological Assessment',
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: "Sample HTP Analysis Report - See How Our AI Works",
-        description: "Explore a detailed sample analysis of a child's house drawing. See how our AI identifies 250+ characteristics and generates comprehensive psychological assessment reports.",
-        images: ['/sample-analysis-og.jpg'],
-    },
-};
+
 
 export default function SampleAnalysis() {
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [reportGenerated, setReportGenerated] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Sample analysis result based on the page content
+    const sampleAnalysisResult = {
+        analysis_id: "sample-demo-001",
+        house_size_category: "Small",
+        detected_features: ["wall", "window"],
+        missing_features: ["chimney", "door", "house", "roof"],
+        risk_factors: ["lack of emotional warmth", "social difficulties", "isolation"],
+        positive_indicators: [],
+        psychological_interpretation: "Door Missing: insecurity, difficulty connecting with others; Chimney Missing: lack of warmth in home environment",
+        overall_confidence_score: 0.491,
+        processing_time_seconds: 1.52,
+        house_area_ratio: 0.25,
+        house_placement: ["center"],
+        door_present: false,
+        window_count: 1,
+        chimney_present: false,
+        detection_confidence: {
+            "wall": 0.85,
+            "window": 0.78,
+            "door": 0.45,
+            "roof": 0.42,
+            "chimney": 0.38
+        },
+        psychological_indicators: {
+            "emotional_security": ["lack of emotional warmth"],
+            "social_functioning": ["social difficulties", "isolation"],
+            "environmental_comfort": ["minimal environmental detail"]
+        }
+    };
+
+    const generateAndDownloadReport = async () => {
+        setIsGeneratingReport(true);
+        setError(null);
+
+        try {
+            // Generate report using Gemini
+            const geminiReport = await generateReportWithGemini(sampleAnalysisResult);
+
+            // Generate and download PDF
+            await generatePDFReport(sampleAnalysisResult, geminiReport);
+
+            setReportGenerated(true);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to generate report';
+            setError(errorMessage);
+            console.error('Report generation error:', err);
+        } finally {
+            setIsGeneratingReport(false);
+        }
+    };
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white dark:from-gray-900 dark:to-gray-800">
             {/* Header */}
@@ -102,6 +123,18 @@ export default function SampleAnalysis() {
 
             <div className="container mx-auto px-4 pb-16">
                 <div className="max-w-6xl mx-auto">
+                    {/* Error Display */}
+                    {error && (
+                        <Card className="border-red-200 dark:border-red-800 mb-8">
+                            <CardContent className="pt-6">
+                                <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    <span>{error}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Header with Overall Results */}
                     <Card className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 dark:from-green-900/20 dark:via-blue-900/20 dark:to-purple-900/20 border-0 shadow-lg mb-8">
                         <CardHeader className="text-center pb-4">
@@ -150,14 +183,29 @@ export default function SampleAnalysis() {
                                             <p className="text-sm mt-1">(Drawing placeholder)</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline">
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Download Report
-                                        </Button>
-                                        <Button size="sm" variant="outline">
-                                            <Share className="mr-2 h-4 w-4" />
-                                            Share
+                                    <div className="flex flex-col gap-2">
+                                        <Button
+                                            size="sm"
+                                            onClick={generateAndDownloadReport}
+                                            disabled={isGeneratingReport || reportGenerated}
+                                            className="w-full"
+                                        >
+                                            {isGeneratingReport ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Generating Report...
+                                                </>
+                                            ) : reportGenerated ? (
+                                                <>
+                                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                                    Report Downloaded
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Download className="mr-2 h-4 w-4" />
+                                                    Generate & Download PDF
+                                                </>
+                                            )}
                                         </Button>
                                     </div>
                                 </CardContent>

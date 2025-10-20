@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Loader2, AlertCircle, CheckCircle, X, Home, Eye, Heart, Brain, TrendingUp, Clock, Target, Shield, AlertTriangle } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, CheckCircle, X, Home, Eye, Heart, Brain, TrendingUp, Clock, Target, Shield, AlertTriangle, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { generateReportWithGemini, type GeminiReport } from '@/lib/gemini';
+import { generatePDFReport } from '@/lib/pdfGenerator';
 
 interface AnalysisResult {
     analysis_id: string;
@@ -31,13 +33,52 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
     const [isDragging, setIsDragging] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(0.25);
+    const [reportGenerated, setReportGenerated] = useState(false);
+    const [geminiReport, setGeminiReport] = useState<GeminiReport | null>(null);
+    const [isGeneratingGemini, setIsGeneratingGemini] = useState(false);
+    const [geminiError, setGeminiError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+    const runGeminiReport = useCallback(async (result: AnalysisResult) => {
+        setIsGeneratingGemini(true);
+        setGeminiError(null);
+
+        try {
+            const report = await generateReportWithGemini(result);
+            setGeminiReport(report);
+            setReportGenerated(false);
+        } catch (err) {
+            console.error('Gemini report generation error:', err);
+            setGeminiReport(null);
+            setGeminiError('Unable to generate AI insights right now. Please try again.');
+        } finally {
+            setIsGeneratingGemini(false);
+        }
+    }, []);
+
+    const handleRetryGemini = () => {
+        if (analysisResult) {
+            void runGeminiReport(analysisResult);
+        }
+    };
+
+    const renderParagraphs = (text: string) =>
+        text
+            .split(/\n+/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+            .map((paragraph, index) => (
+                <p key={index} className="mb-3 last:mb-0">
+                    {paragraph}
+                </p>
+            ));
 
     const validateFile = (file: File): string | null => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/bmp', 'image/tiff'];
@@ -105,6 +146,11 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
         setIsAnalyzing(true);
         setError(null);
         setAnalysisResult(null);
+        setReportGenerated(false);
+        setGeminiReport(null);
+        setGeminiError(null);
+
+        let result: AnalysisResult | null = null;
 
         try {
             const formData = new FormData();
@@ -120,13 +166,40 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                 throw new Error(errorData.message || 'Analysis failed');
             }
 
-            const result: AnalysisResult = await response.json();
-            setAnalysisResult(result);
-            onAnalysisComplete?.(result);
+            const parsedResult: AnalysisResult = await response.json();
+            result = parsedResult;
+            setAnalysisResult(parsedResult);
+            onAnalysisComplete?.(parsedResult);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsAnalyzing(false);
+        }
+
+        if (result) {
+            void runGeminiReport(result);
+        }
+    };
+
+    const generateAndDownloadReport = async () => {
+        if (!analysisResult || !geminiReport) {
+            setError('AI insights are not ready yet. Please wait before downloading the report.');
+            return;
+        }
+
+        setIsGeneratingReport(true);
+        setError(null);
+
+        try {
+            await generatePDFReport(analysisResult, geminiReport);
+
+            setReportGenerated(true);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to generate report';
+            setError(errorMessage);
+            console.error('Report generation error:', err);
+        } finally {
+            setIsGeneratingReport(false);
         }
     };
 
@@ -134,6 +207,10 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
         setSelectedFile(null);
         setAnalysisResult(null);
         setError(null);
+        setReportGenerated(false);
+        setGeminiReport(null);
+        setGeminiError(null);
+        setIsGeneratingGemini(false);
     };
 
     return (
@@ -199,14 +276,14 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
 
                                 <Button
                                     onClick={analyzeImage}
-                                    disabled={isAnalyzing}
+                                    disabled={isAnalyzing || isGeneratingGemini}
                                     className="px-8"
                                     size="lg"
                                 >
-                                    {isAnalyzing ? (
+                                    {isAnalyzing || isGeneratingGemini ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Analyzing...
+                                            {isAnalyzing ? 'Analyzing...' : 'Preparing AI insights...'}
                                         </>
                                     ) : (
                                         <>
@@ -284,6 +361,41 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                                 <div className="text-lg text-gray-600 dark:text-gray-400 font-medium">
                                     Overall Analysis Confidence
                                 </div>
+                            </div>
+
+                            {/* Report Generation Section */}
+                            <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    AI insights are {isGeneratingGemini ? 'being prepared' : geminiReport ? 'ready' : 'pending'}.
+                                </p>
+                                {!geminiReport && !isGeneratingGemini && (
+                                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
+                                        AI insights failed to load. You can retry below.
+                                    </p>
+                                )}
+                                <Button
+                                    onClick={generateAndDownloadReport}
+                                    disabled={isGeneratingReport || isGeneratingGemini || !geminiReport}
+                                    className="px-6 py-2"
+                                    size="lg"
+                                >
+                                    {isGeneratingReport ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Generating Report...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Download className="mr-2 h-4 w-4" />
+                                            {reportGenerated ? 'Download PDF Report Again' : 'Download PDF Report'}
+                                        </>
+                                    )}
+                                </Button>
+                                {reportGenerated && (
+                                    <p className="mt-2 text-xs text-green-700 dark:text-green-300">
+                                        Report downloaded successfully.
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -413,20 +525,92 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                                 )}
                             </div>
 
-                            {/* Psychological Interpretation */}
+                            {/* AI Psychological Interpretation */}
                             <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
                                 <CardHeader>
                                     <CardTitle className="flex items-center text-purple-800 dark:text-purple-200">
                                         <Brain className="mr-2 h-6 w-6" />
-                                        Psychological Interpretation
+                                        AI Psychological Interpretation
                                     </CardTitle>
+                                    <CardDescription className="text-sm text-purple-700 dark:text-purple-300">
+                                        {isGeneratingGemini
+                                            ? 'Generating detailed psychological report with Gemini...'
+                                            : geminiReport
+                                                ? 'Insights generated by Gemini 2.5 Flash Lite'
+                                                : geminiError
+                                                    ? 'AI insights unavailable. Showing fallback interpretation.'
+                                                    : 'AI insights not available yet.'}
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                            {analysisResult.psychological_interpretation}
-                                        </p>
-                                    </div>
+                                    {isGeneratingGemini ? (
+                                        <div className="flex items-center justify-center space-x-3 py-8 text-purple-700 dark:text-purple-200">
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                            <span className="text-sm font-medium">Preparing AI-driven psychological interpretation...</span>
+                                        </div>
+                                    ) : geminiReport ? (
+                                        <div className="space-y-5">
+                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                                                    {geminiReport.title}
+                                                </h2>
+                                            </div>
+                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Executive Summary</h3>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                    {geminiReport.summary}
+                                                </p>
+                                            </div>
+                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Detailed Analysis</h3>
+                                                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                                                    {renderParagraphs(geminiReport.detailedAnalysis)}
+                                                </div>
+                                            </div>
+                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Recommendations</h3>
+                                                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                                    {geminiReport.recommendations.map((rec, index) => (
+                                                        <li key={index} className="flex items-start">
+                                                            <span className="mt-1 mr-2 text-purple-500 dark:text-purple-300">•</span>
+                                                            <span>{rec}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="p-4 bg-purple-100/60 dark:bg-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h4 className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide mb-1">Disclaimer</h4>
+                                                <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
+                                                    {geminiReport.disclaimers}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {geminiError && (
+                                                <div className="flex items-start space-x-2 text-sm text-red-600 dark:text-red-400">
+                                                    <AlertCircle className="h-4 w-4 mt-0.5" />
+                                                    <span>{geminiError}</span>
+                                                </div>
+                                            )}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleRetryGemini}
+                                                className="inline-flex items-center"
+                                                disabled={!analysisResult}
+                                            >
+                                                <RefreshCw className="mr-2 h-4 w-4" />
+                                                Retry AI Insights
+                                            </Button>
+                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Latest Interpretation</h3>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                    {analysisResult.psychological_interpretation}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>
