@@ -342,301 +342,393 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
             {analysisResult && (
                 <div className="space-y-8">
                     {/* Header with Overall Results */}
-                    <Card className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 dark:from-green-900/20 dark:via-blue-900/20 dark:to-purple-900/20 border-0 shadow-lg">
+                    <Card className="bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-900/20 dark:via-blue-900/20 dark:to-purple-900/20 border-2 border-green-200/50 dark:border-green-700/30 shadow-xl">
                         <CardHeader className="text-center pb-4">
-                            <CardTitle className="flex items-center justify-center text-2xl">
-                                <CheckCircle className="mr-3 h-8 w-8 text-green-600" />
-                                Analysis Complete
+                            <CardTitle className="flex items-center justify-center text-3xl font-bold">
+                                <CheckCircle className="mr-3 h-10 w-10 text-green-600 drop-shadow-md" />
+                                <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                                    Analysis Complete
+                                </span>
                             </CardTitle>
-                            <CardDescription className="text-lg">
-                                <Clock className="inline mr-2 h-4 w-4" />
-                                Analysis completed in {analysisResult.processing_time_seconds.toFixed(2)} seconds
+                            <CardDescription className="text-lg mt-2 flex items-center justify-center gap-2">
+                                <Clock className="h-5 w-5 text-blue-600" />
+                                <span className="font-medium text-gray-700 dark:text-gray-300">
+                                    Completed in {analysisResult.processing_time_seconds.toFixed(2)} seconds
+                                </span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="text-center">
-                            <div className="mb-6">
-                                <div className="text-6xl font-bold text-orange-600 mb-2">
-                                    {(analysisResult.overall_confidence_score * 100).toFixed(1)}%
-                                </div>
-                                <div className="text-lg text-gray-600 dark:text-gray-400 font-medium">
-                                    Overall Analysis Confidence
+                            <div className="mb-6 relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-pink-400 opacity-20 blur-3xl rounded-full"></div>
+                                <div className="relative">
+                                    <div className="text-7xl font-black bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 bg-clip-text text-transparent mb-3 tracking-tight">
+                                        {(analysisResult.overall_confidence_score * 100).toFixed(1)}%
+                                    </div>
+                                    <div className="text-xl text-gray-700 dark:text-gray-300 font-semibold mb-2">
+                                        Overall Analysis Confidence
+                                    </div>
+                                    <div className="w-48 h-2 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-orange-500 to-pink-600 rounded-full transition-all duration-1000"
+                                            style={{ width: `${analysisResult.overall_confidence_score * 100}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Report Generation Section */}
-                            <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-600">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                    AI insights are {isGeneratingGemini ? 'being prepared' : geminiReport ? 'ready' : 'pending'}.
-                                </p>
-                                {!geminiReport && !isGeneratingGemini && (
-                                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
-                                        AI insights failed to load. You can retry below.
-                                    </p>
-                                )}
+                            <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700">
+                                <div className="inline-flex items-center gap-2 mb-3 px-4 py-2 bg-white/60 dark:bg-gray-800/60 rounded-full">
+                                    {isGeneratingGemini ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Preparing AI insights...</span>
+                                        </>
+                                    ) : geminiReport ? (
+                                        <>
+                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                            <span className="text-sm font-medium text-green-700 dark:text-green-300">AI insights ready</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <AlertCircle className="h-4 w-4 text-yellow-600" />
+                                            <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">AI insights pending</span>
+                                        </>
+                                    )}
+                                </div>
                                 <Button
                                     onClick={generateAndDownloadReport}
                                     disabled={isGeneratingReport || isGeneratingGemini || !geminiReport}
-                                    className="px-6 py-2"
+                                    className="px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
                                     size="lg"
                                 >
                                     {isGeneratingReport ? (
                                         <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                             Generating Report...
                                         </>
                                     ) : (
                                         <>
-                                            <Download className="mr-2 h-4 w-4" />
+                                            <Download className="mr-2 h-5 w-5" />
                                             {reportGenerated ? 'Download PDF Report Again' : 'Download PDF Report'}
                                         </>
                                     )}
                                 </Button>
                                 {reportGenerated && (
-                                    <p className="mt-2 text-xs text-green-700 dark:text-green-300">
-                                        Report downloaded successfully.
-                                    </p>
+                                    <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                        <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                                            Report downloaded successfully!
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Main Analysis Grid */}
-                    <div className="grid lg:grid-cols-2 gap-8">
-
-                        {/* Left Column - House Characteristics */}
-                        <div className="space-y-6">
-                            {/* House Structure Overview */}
-                            <Card className="border-blue-200 dark:border-blue-800">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center text-blue-800 dark:text-blue-200">
-                                        <Home className="mr-2 h-6 w-6" />
-                                        House Characteristics
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            <div className="text-2xl mb-1">🚪</div>
-                                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Door Present</div>
-                                            <Badge variant={analysisResult.door_present ? "default" : "destructive"} className="text-xs">
-                                                {analysisResult.door_present ? 'Yes' : 'No'}
-                                            </Badge>
-                                        </div>
-                                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            <div className="text-2xl mb-1">🪟</div>
-                                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Windows</div>
-                                            <Badge variant="outline" className="text-xs">{analysisResult.window_count}</Badge>
-                                        </div>
-                                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            <div className="text-2xl mb-1">🏠</div>
-                                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Chimney</div>
-                                            <Badge variant={analysisResult.chimney_present ? "default" : "secondary"} className="text-xs">
-                                                {analysisResult.chimney_present ? 'Present' : 'Absent'}
-                                            </Badge>
-                                        </div>
+                    {/* Main Analysis - Full Width Rows */}
+                    <div className="space-y-8">
+                        {/* Row 1: House Characteristics */}
+                        <Card className="border-2 border-blue-200/60 dark:border-blue-800/60 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-blue-50/30 to-white dark:from-blue-900/10 dark:to-gray-900">
+                            <CardHeader>
+                                <CardTitle className="flex items-center text-2xl font-bold">
+                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-3">
+                                        <Home className="h-6 w-6 text-blue-600" />
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <span className="bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+                                        House Characteristics
+                                    </span>
+                                </CardTitle>
+                                <CardDescription className="text-sm mt-1">
+                                    Structural elements detected in the drawing
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-3xl">
+                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                        <div className="text-3xl mb-2 drop-shadow-md">🚪</div>
+                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Door Present</div>
+                                        <Badge variant={analysisResult.door_present ? "default" : "destructive"} className="text-xs font-semibold shadow-sm">
+                                            {analysisResult.door_present ? 'Yes' : 'No'}
+                                        </Badge>
+                                    </div>
+                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                        <div className="text-3xl mb-2 drop-shadow-md">🪟</div>
+                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Windows</div>
+                                        <Badge variant="outline" className="text-xs font-semibold shadow-sm">{analysisResult.window_count}</Badge>
+                                    </div>
+                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                        <div className="text-3xl mb-2 drop-shadow-md">🏠</div>
+                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Chimney</div>
+                                        <Badge variant={analysisResult.chimney_present ? "default" : "secondary"} className="text-xs font-semibold shadow-sm">
+                                            {analysisResult.chimney_present ? 'Present' : 'Absent'}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Features Analysis */}
-                            <Card className="border-green-200 dark:border-green-800">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center text-green-800 dark:text-green-200">
-                                        <Eye className="mr-2 h-6 w-6" />
+                        {/* Row 2: Detected Features */}
+                        <Card className="border-2 border-green-200/60 dark:border-green-800/60 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-green-50/30 to-white dark:from-green-900/10 dark:to-gray-900">
+                            <CardHeader>
+                                <CardTitle className="flex items-center text-2xl font-bold">
+                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg mr-3">
+                                        <Eye className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <span className="bg-gradient-to-r from-green-700 to-green-900 bg-clip-text text-transparent">
                                         Detected Features
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                                    </span>
+                                </CardTitle>
+                                <CardDescription className="text-sm mt-1">
+                                    Elements identified by AI analysis
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-5">
+                                <div>
+                                    <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3 flex items-center">
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Present Features
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {analysisResult.detected_features.map((feature) => (
+                                            <Badge key={feature} className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 dark:from-green-900/40 dark:to-green-900/20 dark:text-green-300 border border-green-300 dark:border-green-700 px-3 py-1.5 text-sm font-semibold shadow-sm hover:shadow-md transition-shadow">
+                                                <CheckCircle className="mr-1 h-3 w-3" /> {feature}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {analysisResult.missing_features.length > 0 && (
                                     <div>
+                                        <h4 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-3 flex items-center">
+                                            <X className="mr-2 h-4 w-4" />
+                                            Missing Features
+                                        </h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {analysisResult.detected_features.map((feature) => (
-                                                <Badge key={feature} className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                                    ✓ {feature}
+                                            {analysisResult.missing_features.map((feature) => (
+                                                <Badge key={feature} className="bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/40 dark:to-red-900/20 dark:text-red-300 border border-red-300 dark:border-red-700 px-3 py-1.5 text-sm font-semibold shadow-sm hover:shadow-md transition-shadow">
+                                                    <X className="mr-1 h-3 w-3" /> {feature}
                                                 </Badge>
                                             ))}
                                         </div>
                                     </div>
-
-                                    {analysisResult.missing_features.length > 0 && (
-                                        <div>
-                                            <h4 className="font-semibold mb-3 text-red-700 dark:text-red-300">Missing Features</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {analysisResult.missing_features.map((feature) => (
-                                                    <Badge key={feature} className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                                                        ✗ {feature}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Right Column - Psychological Assessment */}
-                        <div className="space-y-6">
-                            {/* Psychological Indicators */}
-                            <div className="space-y-4">
-                                {/* Positive Indicators */}
-                                <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center text-green-800 dark:text-green-200 text-lg">
-                                            <Shield className="mr-2 h-5 w-5" />
-                                            Positive Indicators ({analysisResult.positive_indicators.length})
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {analysisResult.positive_indicators.length > 0 ? (
-                                            <ul className="space-y-2">
-                                                {analysisResult.positive_indicators.map((indicator, index) => (
-                                                    <li key={index} className="flex items-start text-sm text-green-700 dark:text-green-300">
-                                                        <TrendingUp className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                        {indicator}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 italic">No significant positive indicators identified</p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-
-                                {/* Areas for Attention */}
-                                {analysisResult.risk_factors.length > 0 && (
-                                    <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-900/10">
-                                        <CardHeader className="pb-3">
-                                            <CardTitle className="flex items-center text-yellow-800 dark:text-yellow-200 text-lg">
-                                                <AlertTriangle className="mr-2 h-5 w-5" />
-                                                Areas for Attention ({analysisResult.risk_factors.length})
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ul className="space-y-2">
-                                                {analysisResult.risk_factors.map((factor, index) => (
-                                                    <li key={index} className="flex items-start text-sm text-yellow-700 dark:text-yellow-300">
-                                                        <Target className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                        {factor}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </CardContent>
-                                    </Card>
                                 )}
-                            </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* AI Psychological Interpretation */}
-                            <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center text-purple-800 dark:text-purple-200">
-                                        <Brain className="mr-2 h-6 w-6" />
-                                        AI Psychological Interpretation
+                        {/* Row 3: Psychological Indicators */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Positive Indicators */}
+                            <Card className="border-2 border-green-200/60 dark:border-green-800/60 bg-gradient-to-br from-green-50/80 to-emerald-50/50 dark:from-green-900/20 dark:to-emerald-900/10 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="flex items-center text-xl font-bold">
+                                        <div className="p-2 bg-green-100 dark:bg-green-900/40 rounded-lg mr-3">
+                                            <Shield className="h-5 w-5 text-green-600" />
+                                        </div>
+                                        <span className="bg-gradient-to-r from-green-700 to-green-900 bg-clip-text text-transparent">
+                                            Positive Indicators ({analysisResult.positive_indicators.length})
+                                        </span>
                                     </CardTitle>
-                                    <CardDescription className="text-sm text-purple-700 dark:text-purple-300">
-                                        {isGeneratingGemini
-                                            ? 'Generating detailed psychological report with Gemini...'
-                                            : geminiReport
-                                                ? 'Insights generated by Gemini 2.5 Flash Lite'
-                                                : geminiError
-                                                    ? 'AI insights unavailable. Showing fallback interpretation.'
-                                                    : 'AI insights not available yet.'}
+                                    <CardDescription className="text-xs mt-1">
+                                        Strengths identified in the drawing
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    {isGeneratingGemini ? (
-                                        <div className="flex items-center justify-center space-x-3 py-8 text-purple-700 dark:text-purple-200">
-                                            <Loader2 className="h-5 w-5 animate-spin" />
-                                            <span className="text-sm font-medium">Preparing AI-driven psychological interpretation...</span>
-                                        </div>
-                                    ) : geminiReport ? (
-                                        <div className="space-y-5">
-                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                                                    {geminiReport.title}
-                                                </h2>
-                                            </div>
-                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Executive Summary</h3>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                    {geminiReport.summary}
-                                                </p>
-                                            </div>
-                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Detailed Analysis</h3>
-                                                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
-                                                    {renderParagraphs(geminiReport.detailedAnalysis)}
-                                                </div>
-                                            </div>
-                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Recommendations</h3>
-                                                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                                                    {geminiReport.recommendations.map((rec, index) => (
-                                                        <li key={index} className="flex items-start">
-                                                            <span className="mt-1 mr-2 text-purple-500 dark:text-purple-300">•</span>
-                                                            <span>{rec}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                            <div className="p-4 bg-purple-100/60 dark:bg-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h4 className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide mb-1">Disclaimer</h4>
-                                                <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
-                                                    {geminiReport.disclaimers}
-                                                </p>
-                                            </div>
-                                        </div>
+                                    {analysisResult.positive_indicators.length > 0 ? (
+                                        <ul className="space-y-3">
+                                            {analysisResult.positive_indicators.map((indicator, index) => (
+                                                <li key={index} className="flex items-start text-sm text-green-800 dark:text-green-300 bg-white/60 dark:bg-gray-800/40 p-3 rounded-lg border border-green-200 dark:border-green-800/50 shadow-sm hover:shadow-md transition-shadow">
+                                                    <TrendingUp className="mr-2 h-5 w-5 mt-0.5 flex-shrink-0 text-green-600" />
+                                                    <span className="font-medium">{indicator}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     ) : (
-                                        <div className="space-y-4">
-                                            {geminiError && (
-                                                <div className="flex items-start space-x-2 text-sm text-red-600 dark:text-red-400">
-                                                    <AlertCircle className="h-4 w-4 mt-0.5" />
-                                                    <span>{geminiError}</span>
-                                                </div>
-                                            )}
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleRetryGemini}
-                                                className="inline-flex items-center"
-                                                disabled={!analysisResult}
-                                            >
-                                                <RefreshCw className="mr-2 h-4 w-4" />
-                                                Retry AI Insights
-                                            </Button>
-                                            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                                <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Latest Interpretation</h3>
-                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                    {analysisResult.psychological_interpretation}
-                                                </p>
-                                            </div>
+                                        <div className="text-center py-8 px-4 bg-white/60 dark:bg-gray-800/40 rounded-lg border border-green-200 dark:border-green-800/50">
+                                            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">No significant positive indicators identified</p>
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Areas for Attention */}
+                            {analysisResult.risk_factors.length > 0 && (
+                                <Card className="border-2 border-yellow-200/60 dark:border-yellow-800/60 bg-gradient-to-br from-yellow-50/80 to-orange-50/50 dark:from-yellow-900/20 dark:to-orange-900/10 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                    <CardHeader className="pb-4">
+                                        <CardTitle className="flex items-center text-xl font-bold">
+                                            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg mr-3">
+                                                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                                            </div>
+                                            <span className="bg-gradient-to-r from-yellow-700 to-orange-700 bg-clip-text text-transparent">
+                                                Areas for Attention ({analysisResult.risk_factors.length})
+                                            </span>
+                                        </CardTitle>
+                                        <CardDescription className="text-xs mt-1">
+                                            Concerns requiring consideration
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ul className="space-y-3">
+                                            {analysisResult.risk_factors.map((factor, index) => (
+                                                <li key={index} className="flex items-start text-sm text-yellow-800 dark:text-yellow-300 bg-white/60 dark:bg-gray-800/40 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800/50 shadow-sm hover:shadow-md transition-shadow">
+                                                    <Target className="mr-2 h-5 w-5 mt-0.5 flex-shrink-0 text-yellow-600" />
+                                                    <span className="font-medium">{factor}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
+
+                        {/* Row 4: AI Psychological Interpretation - Full Width */}
+                        <Card className="border-2 border-purple-200/60 dark:border-purple-800/60 bg-gradient-to-br from-purple-50/80 to-pink-50/50 dark:from-purple-900/20 dark:to-pink-900/10 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <CardHeader>
+                                <CardTitle className="flex items-center text-2xl font-bold">
+                                    <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg mr-3">
+                                        <Brain className="h-6 w-6 text-purple-600" />
+                                    </div>
+                                    <span className="bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
+                                        AI Psychological Interpretation
+                                    </span>
+                                </CardTitle>
+                                <CardDescription className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                                    {isGeneratingGemini
+                                        ? 'Generating detailed psychological report with Gemini...'
+                                        : geminiReport
+                                            ? 'Insights generated by Gemini 2.5 Flash Lite'
+                                            : geminiError
+                                                ? 'AI insights unavailable. Showing fallback interpretation.'
+                                                : 'AI insights not available yet.'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isGeneratingGemini ? (
+                                    <div className="flex items-center justify-center space-x-3 py-8 text-purple-700 dark:text-purple-200">
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        <span className="text-sm font-medium">Preparing AI-driven psychological interpretation...</span>
+                                    </div>
+                                ) : geminiReport ? (
+                                    <div className="space-y-5">
+                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+                                                {geminiReport.title}
+                                            </h2>
+                                        </div>
+                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Executive Summary</h3>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                {geminiReport.summary}
+                                            </p>
+                                        </div>
+                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Detailed Analysis</h3>
+                                            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                                                {renderParagraphs(geminiReport.detailedAnalysis)}
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Recommendations</h3>
+                                            <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                                {geminiReport.recommendations.map((rec, index) => (
+                                                    <li key={index} className="flex items-start">
+                                                        <span className="mt-1 mr-2 text-purple-500 dark:text-purple-300">•</span>
+                                                        <span>{rec}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="p-4 bg-purple-100/60 dark:bg-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h4 className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide mb-1">Disclaimer</h4>
+                                            <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
+                                                {geminiReport.disclaimers}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {geminiError && (
+                                            <div className="flex items-start space-x-2 text-sm text-red-600 dark:text-red-400">
+                                                <AlertCircle className="h-4 w-4 mt-0.5" />
+                                                <span>{geminiError}</span>
+                                            </div>
+                                        )}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleRetryGemini}
+                                            className="inline-flex items-center"
+                                            disabled={!analysisResult}
+                                        >
+                                            <RefreshCw className="mr-2 h-4 w-4" />
+                                            Retry AI Insights
+                                        </Button>
+                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
+                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Latest Interpretation</h3>
+                                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                {analysisResult.psychological_interpretation}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
 
                     {/* Additional Insights */}
-                    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700">
+                    <Card className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border-2 border-blue-200/50 dark:border-blue-700/30 shadow-lg">
                         <CardHeader>
-                            <CardTitle className="flex items-center text-blue-800 dark:text-blue-200">
-                                <Heart className="mr-2 h-6 w-6" />
-                                Analysis Summary
+                            <CardTitle className="flex items-center text-2xl font-bold">
+                                <Heart className="mr-3 h-7 w-7 text-pink-600 drop-shadow-md" />
+                                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    Analysis Summary
+                                </span>
                             </CardTitle>
+                            <CardDescription className="text-base mt-1 text-gray-600 dark:text-gray-400">
+                                Key metrics from your house drawing analysis
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid md:grid-cols-3 gap-4">
-                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                    <div className="text-2xl font-bold text-blue-600">{analysisResult.detected_features.length}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">Features Detected</div>
+                            <div className="grid md:grid-cols-3 gap-6">
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                    <div className="relative text-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-blue-100 dark:border-blue-900/50">
+                                        <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-3">
+                                            <Eye className="h-6 w-6 text-blue-600" />
+                                        </div>
+                                        <div className="text-4xl font-black bg-gradient-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent mb-2">
+                                            {analysisResult.detected_features.length}
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Features Detected</div>
+                                        <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
+                                    </div>
                                 </div>
-                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                    <div className="text-2xl font-bold text-green-600">{analysisResult.positive_indicators.length}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">Positive Indicators</div>
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-green-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                    <div className="relative text-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-green-100 dark:border-green-900/50">
+                                        <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full mb-3">
+                                            <Shield className="h-6 w-6 text-green-600" />
+                                        </div>
+                                        <div className="text-4xl font-black bg-gradient-to-br from-green-600 to-green-800 bg-clip-text text-transparent mb-2">
+                                            {analysisResult.positive_indicators.length}
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Positive Indicators</div>
+                                        <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
+                                    </div>
                                 </div>
-                                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                                    <div className="text-2xl font-bold text-yellow-600">{analysisResult.risk_factors.length}</div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400">Areas of Attention</div>
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                                    <div className="relative text-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-yellow-100 dark:border-yellow-900/50">
+                                        <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
+                                            <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                                        </div>
+                                        <div className="text-4xl font-black bg-gradient-to-br from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">
+                                            {analysisResult.risk_factors.length}
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Areas of Attention</div>
+                                        <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-yellow-400 to-orange-600 rounded-full"></div>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
