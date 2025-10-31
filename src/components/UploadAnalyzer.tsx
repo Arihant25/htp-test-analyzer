@@ -19,8 +19,36 @@ interface AnalysisResult {
     house_area_ratio: number;
     house_placement: string[];
     door_present: boolean;
+    door_characteristics?: {
+        present: boolean;
+        size_category: string;
+        position: string;
+        accessibility: string;
+    };
     window_count: number;
+    window_characteristics?: {
+        count: number;
+        size_variation: string;
+        placement: string;
+        interpretation: string[];
+    };
     chimney_present: boolean;
+    chimney_characteristics?: {
+        present: boolean;
+        size: string;
+        smoke_present: boolean;
+        position: string;
+    };
+    roof_characteristics?: {
+        present: boolean;
+        shape: string;
+        size: string;
+    };
+    wall_characteristics?: {
+        present: boolean;
+        thickness: string;
+        completeness: string;
+    };
     detection_confidence: Record<string, number>;
     psychological_indicators: Record<string, string[]>;
 }
@@ -444,25 +472,214 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-3xl">
-                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
-                                        <div className="text-3xl mb-2 drop-shadow-md">🚪</div>
-                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Door Present</div>
-                                        <Badge variant={analysisResult.door_present ? "default" : "destructive"} className="text-xs font-semibold shadow-sm">
-                                            {analysisResult.door_present ? 'Yes' : 'No'}
-                                        </Badge>
+                                {/* Size Characteristics - Prominent Display */}
+                                <div className="mb-6">
+                                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
+                                        <Home className="mr-2 h-4 w-4" />
+                                        House Size Characteristics
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-gradient-to-br from-blue-100/50 to-indigo-100/50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">Size Category</div>
+                                            <div className="text-2xl font-bold text-blue-900 dark:text-blue-100 capitalize mb-1">
+                                                {analysisResult.house_size_category}
+                                            </div>
+                                            <Badge
+                                                variant={
+                                                    analysisResult.house_size_category === 'small' ? 'destructive' :
+                                                        analysisResult.house_size_category === 'large' ? 'destructive' :
+                                                            'default'
+                                                }
+                                                className="text-xs font-semibold"
+                                            >
+                                                {analysisResult.house_size_category === 'small' && 'May indicate withdrawal'}
+                                                {analysisResult.house_size_category === 'large' && 'May indicate hostility'}
+                                                {analysisResult.house_size_category === 'normal' && 'Healthy size perception'}
+                                            </Badge>
+                                        </div>
+                                        <div className="p-4 bg-gradient-to-br from-purple-100/50 to-pink-100/50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg border-2 border-purple-200 dark:border-purple-700">
+                                            <div className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-2">Area Ratio</div>
+                                            <div className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1">
+                                                {(analysisResult.house_area_ratio * 100).toFixed(1)}%
+                                            </div>
+                                            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-1000 ${analysisResult.house_area_ratio < 0.1 ? 'bg-gradient-to-r from-red-400 to-red-600' :
+                                                        analysisResult.house_area_ratio > 0.6 ? 'bg-gradient-to-r from-orange-400 to-red-600' :
+                                                            'bg-gradient-to-r from-green-400 to-blue-600'
+                                                        }`}
+                                                    style={{ width: `${Math.min(analysisResult.house_area_ratio * 100, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <div className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                                                {analysisResult.house_placement.length > 0 && `Placement: ${analysisResult.house_placement.join(', ')}`}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
-                                        <div className="text-3xl mb-2 drop-shadow-md">🪟</div>
-                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Windows</div>
-                                        <Badge variant="outline" className="text-xs font-semibold shadow-sm">{analysisResult.window_count}</Badge>
+                                </div>
+
+                                {/* Structural Elements */}
+                                <div>
+                                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Structural Elements
+                                    </h4>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                            <div className="text-3xl mb-2 drop-shadow-md">🚪</div>
+                                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Door Present</div>
+                                            <Badge variant={analysisResult.door_present ? "default" : "destructive"} className="text-xs font-semibold shadow-sm">
+                                                {analysisResult.door_present ? 'Yes' : 'No'}
+                                            </Badge>
+                                        </div>
+                                        <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                            <div className="text-3xl mb-2 drop-shadow-md">🪟</div>
+                                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Windows</div>
+                                            <Badge variant="outline" className="text-xs font-semibold shadow-sm">{analysisResult.window_count}</Badge>
+                                        </div>
+                                        <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
+                                            <div className="text-3xl mb-2 drop-shadow-md">🏠</div>
+                                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Chimney</div>
+                                            <Badge variant={analysisResult.chimney_present ? "default" : "secondary"} className="text-xs font-semibold shadow-sm">
+                                                {analysisResult.chimney_present ? 'Present' : 'Absent'}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                    <div className="text-center p-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700">
-                                        <div className="text-3xl mb-2 drop-shadow-md">🏠</div>
-                                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Chimney</div>
-                                        <Badge variant={analysisResult.chimney_present ? "default" : "secondary"} className="text-xs font-semibold shadow-sm">
-                                            {analysisResult.chimney_present ? 'Present' : 'Absent'}
-                                        </Badge>
+                                </div>
+
+                                {/* Detailed Size Analysis */}
+                                <div className="mt-6">
+                                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
+                                        <Target className="mr-2 h-4 w-4" />
+                                        Detailed Size Analysis
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Door Details */}
+                                        {analysisResult.door_characteristics && (
+                                            <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                                <div className="flex items-center mb-2">
+                                                    <span className="text-2xl mr-2">🚪</span>
+                                                    <h5 className="font-semibold text-amber-900 dark:text-amber-100">Door Characteristics</h5>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-amber-700 dark:text-amber-300">Size:</span>
+                                                        <Badge
+                                                            variant={
+                                                                analysisResult.door_characteristics.size_category === 'tiny' ? 'destructive' :
+                                                                    analysisResult.door_characteristics.size_category === 'large' ? 'destructive' :
+                                                                        'default'
+                                                            }
+                                                            className="capitalize"
+                                                        >
+                                                            {analysisResult.door_characteristics.size_category}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-amber-700 dark:text-amber-300">Position:</span>
+                                                        <Badge variant="outline" className="capitalize">
+                                                            {analysisResult.door_characteristics.position}
+                                                        </Badge>
+                                                    </div>
+                                                    {analysisResult.door_characteristics.size_category === 'tiny' && (
+                                                        <p className="text-xs text-red-600 dark:text-red-400 mt-2 italic">
+                                                            ⚠️ Tiny doors may indicate fearfulness or withdrawal
+                                                        </p>
+                                                    )}
+                                                    {analysisResult.door_characteristics.size_category === 'large' && (
+                                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 italic">
+                                                            ⚠️ Large doors may indicate dependency needs
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Window Details */}
+                                        {analysisResult.window_characteristics && (
+                                            <div className="p-4 bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
+                                                <div className="flex items-center mb-2">
+                                                    <span className="text-2xl mr-2">🪟</span>
+                                                    <h5 className="font-semibold text-sky-900 dark:text-sky-100">Window Characteristics</h5>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sky-700 dark:text-sky-300">Count:</span>
+                                                        <Badge variant="outline">{analysisResult.window_characteristics.count}</Badge>
+                                                    </div>
+                                                    {analysisResult.window_characteristics.interpretation &&
+                                                        analysisResult.window_characteristics.interpretation.length > 0 && (
+                                                            <div className="mt-2">
+                                                                {analysisResult.window_characteristics.interpretation.map((interp, idx) => (
+                                                                    <p key={idx} className="text-xs text-sky-700 dark:text-sky-300 italic">
+                                                                        {interp}
+                                                                    </p>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Chimney Details */}
+                                        {analysisResult.chimney_characteristics && analysisResult.chimney_characteristics.present && (
+                                            <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
+                                                <div className="flex items-center mb-2">
+                                                    <span className="text-2xl mr-2">🏠</span>
+                                                    <h5 className="font-semibold text-rose-900 dark:text-rose-100">Chimney Characteristics</h5>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-rose-700 dark:text-rose-300">Size:</span>
+                                                        <Badge
+                                                            variant={
+                                                                analysisResult.chimney_characteristics.size === 'large' ||
+                                                                    analysisResult.chimney_characteristics.size === 'small' ?
+                                                                    'destructive' : 'default'
+                                                            }
+                                                            className="capitalize"
+                                                        >
+                                                            {analysisResult.chimney_characteristics.size}
+                                                        </Badge>
+                                                    </div>
+                                                    {analysisResult.chimney_characteristics.size === 'large' && (
+                                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 italic">
+                                                            ⚠️ Oversized chimney may indicate preoccupation with fantasy
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Roof Details */}
+                                        {analysisResult.roof_characteristics && analysisResult.roof_characteristics.present && (
+                                            <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                                                <div className="flex items-center mb-2">
+                                                    <span className="text-2xl mr-2">🏘️</span>
+                                                    <h5 className="font-semibold text-violet-900 dark:text-violet-100">Roof Characteristics</h5>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-violet-700 dark:text-violet-300">Size:</span>
+                                                        <Badge
+                                                            variant={
+                                                                analysisResult.roof_characteristics.size === 'large' ||
+                                                                    analysisResult.roof_characteristics.size === 'small' ?
+                                                                    'destructive' : 'default'
+                                                            }
+                                                            className="capitalize"
+                                                        >
+                                                            {analysisResult.roof_characteristics.size}
+                                                        </Badge>
+                                                    </div>
+                                                    {analysisResult.roof_characteristics.size === 'large' && (
+                                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 italic">
+                                                            ⚠️ Large roof may indicate excessive fantasy or intellectual preoccupation
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>

@@ -46,8 +46,36 @@ export default function SampleAnalysis() {
         house_area_ratio: 0.16,
         house_placement: ["center", "middle"],
         door_present: true,
+        door_characteristics: {
+            present: true,
+            size_category: "normal",
+            position: "centered",
+            accessibility: "accessible"
+        },
         window_count: 2,
+        window_characteristics: {
+            count: 2,
+            size_variation: "consistent",
+            placement: "balanced",
+            interpretation: ["normal window count", "appropriate for house size"]
+        },
         chimney_present: true,
+        chimney_characteristics: {
+            present: true,
+            size: "normal",
+            smoke_present: false,
+            position: "centered"
+        },
+        roof_characteristics: {
+            present: true,
+            shape: "triangular",
+            size: "normal"
+        },
+        wall_characteristics: {
+            present: true,
+            thickness: "normal",
+            completeness: "complete"
+        },
         detection_confidence: {
             "door": 0.92,
             "roof": 0.89,
@@ -288,6 +316,80 @@ export default function SampleAnalysis() {
                                         <div className="text-3xl mb-2 drop-shadow-md">🏠</div>
                                         <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Chimney</div>
                                         <Badge variant="default" className="text-xs font-semibold shadow-sm bg-green-600">Present</Badge>
+                                    </div>
+                                </div>
+
+                                {/* Detailed Size Analysis */}
+                                <div className="mt-6">
+                                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3 flex items-center">
+                                        <Target className="mr-2 h-4 w-4" />
+                                        Detailed Size Analysis
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Door Details */}
+                                        <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-2xl mr-2">🚪</span>
+                                                <h5 className="font-semibold text-amber-900 dark:text-amber-100">Door Characteristics</h5>
+                                            </div>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-amber-700 dark:text-amber-300">Size:</span>
+                                                    <Badge variant="default" className="capitalize">normal</Badge>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-amber-700 dark:text-amber-300">Position:</span>
+                                                    <Badge variant="outline" className="capitalize">centered</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Window Details */}
+                                        <div className="p-4 bg-gradient-to-br from-sky-50 to-cyan-50 dark:from-sky-900/20 dark:to-cyan-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-2xl mr-2">🪟</span>
+                                                <h5 className="font-semibold text-sky-900 dark:text-sky-100">Window Characteristics</h5>
+                                            </div>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sky-700 dark:text-sky-300">Count:</span>
+                                                    <Badge variant="outline">2</Badge>
+                                                </div>
+                                                <div className="mt-2">
+                                                    <p className="text-xs text-sky-700 dark:text-sky-300 italic">
+                                                        normal window count
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Chimney Details */}
+                                        <div className="p-4 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-2xl mr-2">🏠</span>
+                                                <h5 className="font-semibold text-rose-900 dark:text-rose-100">Chimney Characteristics</h5>
+                                            </div>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-rose-700 dark:text-rose-300">Size:</span>
+                                                    <Badge variant="default" className="capitalize">normal</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Roof Details */}
+                                        <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-2xl mr-2">🏘️</span>
+                                                <h5 className="font-semibold text-violet-900 dark:text-violet-100">Roof Characteristics</h5>
+                                            </div>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-violet-700 dark:text-violet-300">Size:</span>
+                                                    <Badge variant="default" className="capitalize">normal</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>

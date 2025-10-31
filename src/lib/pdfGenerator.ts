@@ -15,8 +15,36 @@ interface AnalysisResult {
   house_area_ratio: number;
   house_placement: string[];
   door_present: boolean;
+  door_characteristics?: {
+    present: boolean;
+    size_category: string;
+    position: string;
+    accessibility: string;
+  };
   window_count: number;
+  window_characteristics?: {
+    count: number;
+    size_variation: string;
+    placement: string;
+    interpretation: string[];
+  };
   chimney_present: boolean;
+  chimney_characteristics?: {
+    present: boolean;
+    size: string;
+    smoke_present: boolean;
+    position: string;
+  };
+  roof_characteristics?: {
+    present: boolean;
+    shape: string;
+    size: string;
+  };
+  wall_characteristics?: {
+    present: boolean;
+    thickness: string;
+    completeness: string;
+  };
   detection_confidence: Record<string, number>;
   psychological_indicators: Record<string, string[]>;
 }
@@ -428,6 +456,62 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
           </div>
         </div>
       </div>
+
+      <!-- Detailed Size Analysis -->
+      ${analysisResult.door_characteristics || analysisResult.window_characteristics ||
+      analysisResult.chimney_characteristics || analysisResult.roof_characteristics ? `
+      <div class="section">
+        <h2 class="section-title">Detailed Size Analysis</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+          ${analysisResult.door_characteristics ? `
+          <div style="padding: 15px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border: 1px solid #fbbf24;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #92400e;">🚪 Door Characteristics</h3>
+            <div style="font-size: 12px; color: #78350f;">
+              <div style="margin-bottom: 5px;"><strong>Size:</strong> ${analysisResult.door_characteristics.size_category}</div>
+              <div><strong>Position:</strong> ${analysisResult.door_characteristics.position}</div>
+              ${analysisResult.door_characteristics.size_category === 'tiny' ?
+        '<div style="margin-top: 8px; padding: 8px; background: #fee2e2; border-radius: 4px; color: #991b1b; font-size: 11px;">⚠️ Tiny doors may indicate fearfulness or withdrawal</div>' : ''}
+              ${analysisResult.door_characteristics.size_category === 'large' ?
+        '<div style="margin-top: 8px; padding: 8px; background: #fed7aa; border-radius: 4px; color: #c2410c; font-size: 11px;">⚠️ Large doors may indicate dependency needs</div>' : ''}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${analysisResult.window_characteristics ? `
+          <div style="padding: 15px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; border: 1px solid #3b82f6;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #1e40af;">🪟 Window Characteristics</h3>
+            <div style="font-size: 12px; color: #1e3a8a;">
+              <div style="margin-bottom: 5px;"><strong>Count:</strong> ${analysisResult.window_characteristics.count}</div>
+              ${analysisResult.window_characteristics.interpretation && analysisResult.window_characteristics.interpretation.length > 0 ?
+        `<div style="margin-top: 8px; font-style: italic; font-size: 11px;">${analysisResult.window_characteristics.interpretation.join(', ')}</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${analysisResult.chimney_characteristics && analysisResult.chimney_characteristics.present ? `
+          <div style="padding: 15px; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); border-radius: 8px; border: 1px solid #ec4899;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #9f1239;">🏠 Chimney Characteristics</h3>
+            <div style="font-size: 12px; color: #831843;">
+              <div><strong>Size:</strong> ${analysisResult.chimney_characteristics.size}</div>
+              ${analysisResult.chimney_characteristics.size === 'large' ?
+        '<div style="margin-top: 8px; padding: 8px; background: #fed7aa; border-radius: 4px; color: #c2410c; font-size: 11px;">⚠️ Oversized chimney may indicate preoccupation with fantasy</div>' : ''}
+            </div>
+          </div>
+          ` : ''}
+          
+          ${analysisResult.roof_characteristics && analysisResult.roof_characteristics.present ? `
+          <div style="padding: 15px; background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); border-radius: 8px; border: 1px solid #8b5cf6;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #5b21b6;">🏘️ Roof Characteristics</h3>
+            <div style="font-size: 12px; color: #4c1d95;">
+              <div><strong>Size:</strong> ${analysisResult.roof_characteristics.size}</div>
+              ${analysisResult.roof_characteristics.size === 'large' ?
+        '<div style="margin-top: 8px; padding: 8px; background: #fed7aa; border-radius: 4px; color: #c2410c; font-size: 11px;">⚠️ Large roof may indicate excessive fantasy or intellectual preoccupation</div>' : ''}
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
 
       <!-- Detected Features -->
       <div class="section">
