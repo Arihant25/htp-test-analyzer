@@ -47,20 +47,47 @@ interface AnalysisResult {
   };
   detection_confidence: Record<string, number>;
   psychological_indicators: Record<string, string[]>;
+  rag_page_references?: Array<{
+    reference_id: number;
+    pages: string[];
+    distance: number;
+    chunk_preview: string;
+  }>;
 }
 
 /**
- * Generate a professional PDF report from analysis results and Gemini report
+ * Generate professional PDF reports from analysis results and Gemini reports
  * @param analysisResult The analysis result from the backend
- * @param geminiReport The Gemini-generated report
+ * @param geminiReport The Gemini-generated reports for both audiences
+ * @param reportType Which report to generate: 'psychologist', 'parent', or 'both'
  * @returns Promise that resolves when PDF is generated
  */
 export async function generatePDFReport(
   analysisResult: AnalysisResult,
-  geminiReport: GeminiReport
+  geminiReport: GeminiReport,
+  reportType: 'psychologist' | 'parent' | 'both' = 'both'
+): Promise<void> {
+  if (reportType === 'both') {
+    // Generate both reports
+    await generateSinglePDFReport(analysisResult, geminiReport.psychologistReport, 'psychologist');
+    await generateSinglePDFReport(analysisResult, geminiReport.parentReport, 'parent');
+  } else {
+    // Generate single report
+    const report = reportType === 'psychologist' ? geminiReport.psychologistReport : geminiReport.parentReport;
+    await generateSinglePDFReport(analysisResult, report, reportType);
+  }
+}
+
+/**
+ * Generate a single PDF report
+ */
+async function generateSinglePDFReport(
+  analysisResult: AnalysisResult,
+  report: GeminiReport['psychologistReport'] | GeminiReport['parentReport'],
+  reportType: 'psychologist' | 'parent'
 ): Promise<void> {
   // Create HTML content for the PDF
-  const htmlContent = createPDFHTML(analysisResult, geminiReport);
+  const htmlContent = createPDFHTML(analysisResult, report, reportType);
 
   // Create a temporary container
   const container = document.createElement("div");
@@ -163,9 +190,10 @@ export async function generatePDFReport(
       heightLeft -= pageContentHeight;
     }
 
-    // Generate filename with timestamp
+    // Generate filename with timestamp and report type
     const timestamp = new Date().toISOString().split("T")[0];
-    const filename = `HTP-Analysis-Report-${timestamp}.pdf`;
+    const reportTypeSuffix = reportType === 'psychologist' ? 'Professional' : 'Parent';
+    const filename = `HTP-Analysis-Report-${reportTypeSuffix}-${timestamp}.pdf`;
 
     // Download the PDF
     pdf.save(filename);
@@ -178,12 +206,24 @@ export async function generatePDFReport(
 /**
  * Create HTML content for PDF generation
  */
-function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiReport): string {
+function createPDFHTML(
+  analysisResult: AnalysisResult,
+  report: GeminiReport['psychologistReport'] | GeminiReport['parentReport'],
+  reportType: 'psychologist' | 'parent'
+): string {
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  const isPsychologistReport = reportType === 'psychologist';
+  const reportTitle = isPsychologistReport ? "Professional Psychological Assessment" : "Parent-Friendly Report";
+  const headerColor = isPsychologistReport ? "#2563eb" : "#dc2626";
+  const sectionTitle = isPsychologistReport ? "Executive Summary" : "Summary for Parents";
+  const analysisTitle = isPsychologistReport ? "Detailed Psychological Analysis" : "Understanding Your Child's Drawing";
+  const recommendationsTitle = isPsychologistReport ? "Recommendations" : "Ways to Support Your Child";
+  const disclaimerTitle = isPsychologistReport ? "Important Disclaimers" : "Important Note for Parents";
 
   return `
     <!DOCTYPE html>
@@ -208,7 +248,7 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
         }
 
         .header {
-          border-bottom: 3px solid #f97316;
+          border-bottom: 3px solid ${headerColor};
           padding-bottom: 20px;
           margin-bottom: 30px;
           text-align: center;
@@ -405,8 +445,8 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
     <body>
       <!-- Header -->
       <div class="header">
-        <h1>${escapeHtml(geminiReport.title)}</h1>
-        <p>HTP (House-Tree-Person) Test Analysis Report</p>
+        <h1>${escapeHtml(report.title)}</h1>
+        <p>${reportTitle} - HTP (House-Tree-Person) Test Analysis</p>
         <p>Generated on ${currentDate}</p>
       </div>
 
@@ -433,8 +473,8 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
       <!-- Executive Summary -->
       <div class="section">
         <div class="summary-box">
-          <h3>Executive Summary</h3>
-          <p>${escapeHtml(geminiReport.summary)}</p>
+          <h3>${sectionTitle}</h3>
+          <p>${escapeHtml(report.summary)}</p>
         </div>
       </div>
 
@@ -580,18 +620,18 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
 
       <!-- Detailed Analysis -->
       <div class="section">
-        <h2 class="section-title">Detailed Psychological Analysis</h2>
+        <h2 class="section-title">${analysisTitle}</h2>
         <div class="content-box">
-          ${formatDetailedAnalysis(geminiReport.detailedAnalysis)}
+          ${formatDetailedAnalysis(report.detailedAnalysis)}
         </div>
       </div>
 
       <!-- Recommendations -->
       <div class="section">
-        <h2 class="section-title">Recommendations</h2>
+        <h2 class="section-title">${recommendationsTitle}</h2>
         <div class="recommendations-list">
           <ol>
-            ${geminiReport.recommendations
+            ${report.recommendations
       .map(
         (rec: string) =>
           `<li>${escapeHtml(rec)}</li>`
@@ -601,11 +641,33 @@ function createPDFHTML(analysisResult: AnalysisResult, geminiReport: GeminiRepor
         </div>
       </div>
 
+      <!-- Page References -->
+      ${analysisResult.rag_page_references && analysisResult.rag_page_references.length > 0 ? `
+      <div class="section">
+        <h2 class="section-title">Reference Sources from HTP Guide</h2>
+        <div style="background-color: #fef3c7; border-left: 4px solid #f97316; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+          <p style="margin: 0; color: #92400e; font-size: 12px;">The following page numbers from the HTP interpretation manual are relevant to this analysis:</p>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          ${analysisResult.rag_page_references.map((ref) => `
+          <div style="padding: 12px; background-color: #fef9e7; border: 1px solid #fbbf24; border-radius: 6px; font-size: 11px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span style="background-color: #f97316; color: white; padding: 3px 8px; border-radius: 3px; font-weight: 600; margin-right: 8px;">Pages ${ref.pages.join(', ')}</span>
+              <span style="background-color: #fff7ed; color: #c2410c; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 500;">Relevance: ${(100 - Math.min(ref.distance * 10, 100)).toFixed(0)}%</span>
+            </div>
+            <p style="margin: 0; color: #78350f; font-style: italic; line-height: 1.4;">"${escapeHtml(ref.chunk_preview)}"</p>
+          </div>
+          `).join('')}
+        </div>
+        <p style="margin-top: 15px; font-size: 10px; color: #6b7280; font-style: italic;">💡 These references correspond to specific sections in the HTP interpretation guide that are relevant to this analysis.</p>
+      </div>
+      ` : ''}
+
       <!-- Disclaimers -->
       <div class="section">
-        <h2 class="section-title">Important Disclaimers</h2>
+        <h2 class="section-title">${disclaimerTitle}</h2>
         <div class="disclaimer">
-          ${escapeHtml(geminiReport.disclaimers)}
+          ${escapeHtml(report.disclaimers)}
         </div>
       </div>
 

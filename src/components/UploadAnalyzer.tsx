@@ -14,6 +14,8 @@ interface AnalysisResult {
     risk_factors: string[];
     positive_indicators: string[];
     psychological_interpretation: string;
+    psychologist_interpretation?: string;
+    parent_interpretation?: string;
     overall_confidence_score: number;
     processing_time_seconds: number;
     house_area_ratio: number;
@@ -51,6 +53,12 @@ interface AnalysisResult {
     };
     detection_confidence: Record<string, number>;
     psychological_indicators: Record<string, string[]>;
+    rag_page_references?: Array<{
+        reference_id: number;
+        pages: string[];
+        distance: number;
+        chunk_preview: string;
+    }>;
 }
 
 interface UploadAnalyzerProps {
@@ -209,7 +217,7 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
         }
     };
 
-    const generateAndDownloadReport = async () => {
+    const generateAndDownloadReport = async (reportType: 'psychologist' | 'parent' | 'both' = 'both') => {
         if (!analysisResult || !geminiReport) {
             setError('AI insights are not ready yet. Please wait before downloading the report.');
             return;
@@ -219,7 +227,7 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
         setError(null);
 
         try {
-            await generatePDFReport(analysisResult, geminiReport);
+            await generatePDFReport(analysisResult, geminiReport, reportType);
 
             setReportGenerated(true);
         } catch (err) {
@@ -424,32 +432,46 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                                         </>
                                     )}
                                 </div>
-                                <Button
-                                    onClick={generateAndDownloadReport}
-                                    disabled={isGeneratingReport || isGeneratingGemini || !geminiReport}
-                                    className="px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
-                                    size="lg"
-                                >
-                                    {isGeneratingReport ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                            Generating Report...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download className="mr-2 h-5 w-5" />
-                                            {reportGenerated ? 'Download PDF Report Again' : 'Download PDF Report'}
-                                        </>
-                                    )}
-                                </Button>
-                                {reportGenerated && (
-                                    <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                                        <CheckCircle className="h-4 w-4 text-green-600" />
-                                        <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                                            Report downloaded successfully!
-                                        </span>
-                                    </div>
-                                )}
+                                {/* Download Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Button
+                                        onClick={() => generateAndDownloadReport('psychologist')}
+                                        disabled={isGeneratingReport || isGeneratingGemini || !geminiReport}
+                                        className="flex-1 px-6 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                                        size="lg"
+                                    >
+                                        {isGeneratingReport ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="mr-2 h-5 w-5" />
+                                                👨‍⚕️ Professional Report
+                                            </>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => generateAndDownloadReport('parent')}
+                                        disabled={isGeneratingReport || isGeneratingGemini || !geminiReport}
+                                        className="flex-1 px-6 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-white text-gray-900 border-2 border-gray-300 hover:bg-gray-50 hover:border-orange-400"
+                                        size="lg"
+                                    >
+                                        {isGeneratingReport ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                                Generating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="mr-2 h-5 w-5" />
+                                                👨‍👩‍👧‍👦 Parent Report
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -828,39 +850,80 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                                     </div>
                                 ) : geminiReport ? (
                                     <div className="space-y-5">
-                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                            <h2 className="text-lg font-semibold text-purple-900 dark:text-purple-100">
-                                                {geminiReport.title}
+                                        {/* Psychologist Report */}
+                                        <div className="border-2 border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/50 dark:bg-blue-900/10">
+                                            <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+                                                👨‍⚕️ Professional Psychological Report
                                             </h2>
-                                        </div>
-                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">Executive Summary</h3>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                                {geminiReport.summary}
-                                            </p>
-                                        </div>
-                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Detailed Analysis</h3>
-                                            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
-                                                {renderParagraphs(geminiReport.detailedAnalysis)}
+                                            <div className="space-y-4">
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700">
+                                                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">Title</h3>
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300">{geminiReport.psychologistReport.title}</p>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700">
+                                                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">Executive Summary</h3>
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{geminiReport.psychologistReport.summary}</p>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700">
+                                                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">Detailed Analysis</h3>
+                                                    <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                                                        {renderParagraphs(geminiReport.psychologistReport.detailedAnalysis)}
+                                                    </div>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700">
+                                                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3">Recommendations</h3>
+                                                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        {geminiReport.psychologistReport.recommendations.map((rec, index) => (
+                                                            <li key={index} className="flex items-start">
+                                                                <span className="mt-1 mr-2 text-blue-500 dark:text-blue-300">•</span>
+                                                                <span>{rec}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="p-3 bg-blue-100/60 dark:bg-blue-800/20 rounded border border-blue-200 dark:border-blue-700">
+                                                    <h4 className="text-xs font-semibold text-blue-800 dark:text-blue-200 uppercase tracking-wide mb-1">Disclaimer</h4>
+                                                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">{geminiReport.psychologistReport.disclaimers}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700">
-                                            <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-200 mb-3">Recommendations</h3>
-                                            <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                                                {geminiReport.recommendations.map((rec, index) => (
-                                                    <li key={index} className="flex items-start">
-                                                        <span className="mt-1 mr-2 text-purple-500 dark:text-purple-300">•</span>
-                                                        <span>{rec}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                        <div className="p-4 bg-purple-100/60 dark:bg-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                                            <h4 className="text-xs font-semibold text-purple-800 dark:text-purple-200 uppercase tracking-wide mb-1">Disclaimer</h4>
-                                            <p className="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
-                                                {geminiReport.disclaimers}
-                                            </p>
+
+                                        {/* Parent Report */}
+                                        <div className="border-2 border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50/50 dark:bg-red-900/10">
+                                            <h2 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-3 flex items-center">
+                                                👨‍👩‍👧‍👦 Parent-Friendly Report
+                                            </h2>
+                                            <div className="space-y-4">
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-700">
+                                                    <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">Title</h3>
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300">{geminiReport.parentReport.title}</p>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-700">
+                                                    <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">Summary for Parents</h3>
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{geminiReport.parentReport.summary}</p>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-700">
+                                                    <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-3">Understanding Your Child's Drawing</h3>
+                                                    <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+                                                        {renderParagraphs(geminiReport.parentReport.detailedAnalysis)}
+                                                    </div>
+                                                </div>
+                                                <div className="p-3 bg-white dark:bg-gray-800 rounded border border-red-200 dark:border-red-700">
+                                                    <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-3">Ways to Support Your Child</h3>
+                                                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        {geminiReport.parentReport.recommendations.map((rec, index) => (
+                                                            <li key={index} className="flex items-start">
+                                                                <span className="mt-1 mr-2 text-red-500 dark:text-red-300">•</span>
+                                                                <span>{rec}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="p-3 bg-red-100/60 dark:bg-red-800/20 rounded border border-red-200 dark:border-red-700">
+                                                    <h4 className="text-xs font-semibold text-red-800 dark:text-red-200 uppercase tracking-wide mb-1">Important Note for Parents</h4>
+                                                    <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">{geminiReport.parentReport.disclaimers}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -950,6 +1013,45 @@ export default function UploadAnalyzer({ onAnalysisComplete }: UploadAnalyzerPro
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* RAG Page References */}
+                    {analysisResult.rag_page_references && analysisResult.rag_page_references.length > 0 && (
+                        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-700/50 shadow-lg">
+                            <CardHeader>
+                                <CardTitle className="flex items-center text-2xl font-bold">
+                                    <Brain className="mr-3 h-7 w-7 text-amber-600 drop-shadow-md" />
+                                    <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                                        Reference Sources
+                                    </span>
+                                </CardTitle>
+                                <CardDescription className="text-base mt-1 text-gray-600 dark:text-gray-400">
+                                    HTP interpretation guide pages related to this analysis
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {analysisResult.rag_page_references.map((ref) => (
+                                    <div key={ref.reference_id} className="p-4 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-amber-500 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex items-center space-x-2">
+                                                <Badge className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold">
+                                                    Pages: {ref.pages.join(', ')}
+                                                </Badge>
+                                                <Badge variant="outline" className="text-xs">
+                                                    Relevance: {(100 - Math.min(ref.distance * 10, 100)).toFixed(0)}%
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                                            "{ref.chunk_preview}"
+                                        </p>
+                                    </div>
+                                ))}
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 italic">
+                                    💡 Tip: Refer to these page numbers in your HTP interpretation guide for detailed context.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
         </div>
